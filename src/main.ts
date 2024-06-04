@@ -19,7 +19,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('R4M API Documentation')
+    .setTitle('African AI Network Main Server API Documentation')
     .setDescription(
       'This documentation shows all the endpoints available for consumption',
     )
