@@ -14,12 +14,119 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String
-  password String
+  id              String  @id @default(cuid())
+  email           String  @unique
+  password        String
+  name            String
+  role            Role    @default(ADMIN)
+  bio             String? @db.Text()
+  emailVerified   Boolean @default(false) @map("email_verified")
+  approved        Boolean @default(false)
+  profileImageUrl String? @map("profile_image_url")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
 
+  authoredAiTools            AiTool[]
+  authoredAiToolCategories   AiToolCategory[]
+  authoredResources          Resource[]
+  authoredResourceCategories ResourceCategory[]
+
+  @@index([id, email])
   @@map("users")
+}
+
+model AiToolCategory {
+  id       String @id @default(cuid())
+  authorId String @map("author_id")
+
+  title       String
+  description String @db.Text()
+
+  author User @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  AiTool AiTool[]
+
+  @@index([id])
+  @@map("ai-tool-categories")
+}
+
+model AiTool {
+  id               String  @id @default(cuid())
+  authorId         String  @map("author_id")
+  name             String
+  shortDescription String  @map("short_description")
+  fullDescription  String  @map("full_description") @db.Text()
+  siteUrl          String  @map("site_url")
+  featured         Boolean @default(false)
+  pricingModel     String  @map("pricing_model")
+  stars            Int     @default(0)
+  verified         Boolean @default(false)
+  slug             String  @unique()
+  imageUrl         String  @map("image_url")
+  imageAlt         String? @map("image_alt")
+  ytVideoUrl       String? @map("yt_video_url")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  author     User             @relation(fields: [authorId], references: [id])
+  categories AiToolCategory[]
+
+  @@index([id, slug])
+  @@map("ai-tools")
+}
+
+model ResourceCategory {
+  id       String @id @default(cuid())
+  authorId String @map("author_id")
+
+  title       String
+  description String @db.Text()
+
+  author User @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  resources Resource[]
+
+  @@index([id])
+  @@map("resource-categories")
+}
+
+model Resource {
+  id               String  @id @default(cuid())
+  authorId         String  @map("author_id")
+  name             String
+  shortDescription String  @map("short_description")
+  fullDescription  String  @map("full_description") @db.Text()
+  siteUrl          String  @map("site_url")
+  featured         Boolean @default(false)
+  pricingModel     String  @map("pricing_model")
+  stars            Int     @default(0)
+  verified         Boolean @default(false)
+  slug             String  @unique()
+  imageUrl         String  @map("image_url")
+  imageAlt         String? @map("image_alt")
+  ytVideoUrl       String? @map("yt_video_url")
+
+  author User @relation(fields: [authorId], references: [id])
+
+  categories ResourceCategory[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  @@index([id, slug])
+  @@map("resources")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
 }

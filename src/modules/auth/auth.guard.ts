@@ -6,42 +6,39 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { Request } from 'express';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private jwtService: JwtService,
-    private reflector: Reflector,
+    private readonly prismaService: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const bypassAuth = this.reflector.get<boolean>(
-      'bypassAuth',
-      context.getHandler(),
-    );
 
     const token = this.extractTokenFromRequest(request);
-    if (!token && !bypassAuth) {
+    if (!token) {
       throw new UnauthorizedException('No token provided');
     }
 
+    let payload: { id: string } | undefined;
     try {
-      const payload = await this.jwtService.verifyAsync(token);
-
-      const user = await prisma.user.findUniqueOrThrow({
-        where: { id: payload.id },
-      });
-
-      request['user'] = user;
+      payload = await this.jwtService.verifyAsync(token);
     } catch {
-      if (!bypassAuth)
-        throw new UnauthorizedException('Malformed or expired token provided');
+      throw new UnauthorizedException('Malformed or expired token provided');
     }
+
+    const user = await this.prismaService.user.findUniqueOrThrow({
+      where: { id: payload.id },
+    });
+    if (!user.emailVerified)
+      throw new UnauthorizedException('User not verified');
+
+    request['user'] = user;
 
     return true;
   }
@@ -55,13 +52,25 @@ export class AuthGuard implements CanActivate {
 
 @Injectable()
 export class RoleGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    if (request.user?.role !== '')
+    const request: Request = context.switchToHttp().getRequest();
+    if (!request.user)
       throw new UnauthorizedException(
         'You do not have access to perform this action',
       );
 
-    return true;
+    const role = this.reflector.get<Role>('role', context.getHandler());
+
+    if (request.user.role === Role.SUPERADMIN) return true;
+
+    if (request.user.role === role) {
+      if (!request.user.approved)
+        throw new UnauthorizedException('User not approved');
+      return true;
+    }
+
+    return false;
   }
 }

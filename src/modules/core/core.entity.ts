@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class ResponseEntity {
+export class ResponseEntity {
   @ApiProperty({
     type: 'string',
   })
   message: string;
-  statusCode: number;
 }
 
 class ErrorResponseEntity extends ResponseEntity {
   error?: string;
+  statusCode: number;
 }
 
 export class NotFoundResponseEntity extends ErrorResponseEntity {
