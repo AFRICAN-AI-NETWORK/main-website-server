@@ -11,6 +11,9 @@ import { UsersModule } from './modules/users/users.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { AiToolsModule } from './modules/ai-tools/ai-tools.module';
 import { ResourcesModule } from './modules/resources/resources.module';
+import { CoursesModule } from './modules/courses/courses.module';
+import { CountriesModule } from './modules/countries/countries.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -46,6 +49,9 @@ import { ResourcesModule } from './modules/resources/resources.module';
     UploadModule,
     AiToolsModule,
     ResourcesModule,
+    CoursesModule,
+    CountriesModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

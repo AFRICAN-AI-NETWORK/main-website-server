@@ -18,7 +18,7 @@ model User {
   email           String  @unique
   password        String
   name            String
-  role            Role    @default(ADMIN)
+  role            Role    @default(USER)
   bio             String? @db.Text()
   emailVerified   Boolean @default(false) @map("email_verified")
   approved        Boolean @default(false)
@@ -31,6 +31,8 @@ model User {
   authoredAiToolCategories   AiToolCategory[]
   authoredResources          Resource[]
   authoredResourceCategories ResourceCategory[]
+  authoredCourseCategories   CourseCategory[]
+  instructingCourses         Course[]
 
   @@index([id, email])
   @@map("users")
@@ -40,7 +42,7 @@ model AiToolCategory {
   id       String @id @default(cuid())
   authorId String @map("author_id")
 
-  title       String
+  title       String @unique
   description String @db.Text()
 
   author User @relation(fields: [authorId], references: [id])
@@ -48,10 +50,10 @@ model AiToolCategory {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
 
-  AiTool AiTool[]
+  aiTools AiTool[]
 
   @@index([id])
-  @@map("ai-tool-categories")
+  @@map("ai_tool_categories")
 }
 
 model AiTool {
@@ -77,14 +79,14 @@ model AiTool {
   categories AiToolCategory[]
 
   @@index([id, slug])
-  @@map("ai-tools")
+  @@map("ai_tools")
 }
 
 model ResourceCategory {
   id       String @id @default(cuid())
   authorId String @map("author_id")
 
-  title       String
+  title       String @unique
   description String @db.Text()
 
   author User @relation(fields: [authorId], references: [id])
@@ -95,7 +97,7 @@ model ResourceCategory {
   resources Resource[]
 
   @@index([id])
-  @@map("resource-categories")
+  @@map("resource_categories")
 }
 
 model Resource {
@@ -123,6 +125,76 @@ model Resource {
 
   @@index([id, slug])
   @@map("resources")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  countryId   String   @map("country_id")
+  date        DateTime
+  location    String
+  title       String
+  description String   @db.Text()
+  linkToEvent String   @unique @map("link_to_event")
+  imageUrl    String   @map("image_url")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@map("events")
+}
+
+model Country {
+  id          String @id @default(cuid())
+  name        String @unique
+  numMembers  Int    @default(0) @map("num_members")
+  numProjects Int    @default(0) @map("num_projects")
+  imageUrl    String @map("image_url")
+  socials     Json
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  events Event[]
+
+  @@map("countries")
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  title        String
+  description  String   @db.Text()
+  duration     DateTime @db.Time()
+  instructorId String   @map("instructor_id")
+  categoryId   String   @map("category_id")
+  linkToCourse String   @unique @map("link_to_course")
+  imageUrl     String   @map("image_url")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  category   CourseCategory @relation(fields: [categoryId], references: [id])
+  instructor User           @relation(fields: [instructorId], references: [id])
+
+  @@map("courses")
+}
+
+model CourseCategory {
+  id          String @id @default(cuid())
+  authorId    String @map("author_id")
+  title       String @unique
+  description String @db.Text()
+
+  author User @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  courses Course[]
+
+  @@index([id])
+  @@map("course_categories")
 }
 
 enum Role {
