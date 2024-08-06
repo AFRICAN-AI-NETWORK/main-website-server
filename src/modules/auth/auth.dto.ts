@@ -82,5 +82,5 @@ export class RegisterDto {
   @IsNotEmpty()
   @IsString()
   @IsIn([Role.USER, Role.ADMIN])
-  role: Role;
+  role: Role = Role.USER;
 }
